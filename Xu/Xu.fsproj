@@ -62,7 +62,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core.fs" />
     <Compile Include="XuAgent.fs" />
+    <Compile Include="TestRunner.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
   </ItemGroup>
