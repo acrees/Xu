@@ -27,12 +27,16 @@ let runTests mode path = async {
         new DelegatingMessageSink(null, (fun x ->
             match x with
             | :? TestResultMessage as m -> agent.Result m
-            | :? IFinishedMessage as m  -> agent.Finished m
+            | :? TestAssemblyFinished as m  -> agent.Finished m
             | _ -> ()))
-    use fx = new XunitTestFramework()
-    use exec = AssemblyName.GetAssemblyName(path) |> fx.GetExecutor
-    exec.RunAll(msg, XunitOptions (), XunitOptions ())
-    return! agent.GetExitCode ()}
+    try
+        use fx = new XunitTestFramework()
+        use exec = AssemblyName.GetAssemblyName(path) |> fx.GetExecutor
+        exec.RunAll(msg, XunitOptions (), XunitOptions ())
+        return! agent.GetOutput ()
+    with | _ ->
+        printfn "Could not load assembly for test: %s" path
+        return Output.Identity }
 
 let locateAndRunTests mode path locator =
     async {

@@ -4,10 +4,10 @@ module Xu.XuAgent
 open Xunit.Abstractions
 open Xunit.Sdk
 
-let messageToOutput (m:IFinishedMessage) =
+let messageToOutput (m:TestAssemblyFinished) =
     { Time = m.ExecutionTime
-      Tests = m.TestsRun + m.TestsFailed + m.TestsSkipped
-      Passed = m.TestsRun
+      Tests = m.TestsRun
+      Passed = m.TestsRun - m.TestsFailed - m.TestsSkipped
       Failed = m.TestsFailed
       Skipped = m.TestsSkipped }
 
@@ -30,4 +30,4 @@ type XuAgent (mode:Mode) =
 
     member x.Result = agent.Post << Result
     member x.Finished = agent.Post << Finished
-    member x.GetExitCode () = agent.PostAndAsyncReply (fun ch -> OnDone ch)
+    member x.GetOutput () = agent.PostAndAsyncReply (fun ch -> OnDone ch)

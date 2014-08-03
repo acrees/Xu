@@ -14,7 +14,7 @@ type Output = { Time: decimal; Tests: int; Passed: int; Failed: int; Skipped: in
 
 type Message =
     | Result of TestResultMessage
-    | Finished of IFinishedMessage
+    | Finished of TestAssemblyFinished
     | OnDone of AsyncReplyChannel<Output>
 
 type Locator = | Exact | Find | Regex of string
@@ -35,16 +35,17 @@ let combine (o:Output) (p:Output) =
       Skipped = o.Skipped + p.Skipped }
 
 let printFailure v (m:TestFailed) =
-    printfn "Test %s#%s failed!" m.TestClass.Class.Name m.TestMethod.Method.Name
+    printfn "Failure: %s#%s" m.TestClass.Class.Name m.TestMethod.Method.Name
     if v then
       Array.iter (fun x -> printfn "%s" x) m.Messages
       Array.iter (fun x -> printfn "%s" x) m.StackTraces
       printfn ""
 
 let printResults (x:Output) =
-    let time = x.Time.ToString("0.000")
-    printfn "Ran %d tests in %s seconds; %d passed and %d failed."
-            x.Tests time x.Passed x.Failed
+    let time = if x.Time >= 0.1m then x.Time.ToString("0.0") else "< 0.1"
+    let skipped = if x.Skipped > 0 then sprintf " (%d skipped)." x.Skipped else "."
+    printfn "Ran %d tests in %s seconds; %d passed and %d failed%s"
+            x.Tests time x.Passed x.Failed skipped
 
 let concatMap f = List.fold (fun acc n -> f n |> List.append acc) []
 
