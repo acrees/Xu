@@ -19,17 +19,13 @@ type XuAgent (mode:Mode) =
             let! msg = inbox.Receive()
             match (msg, x, ch) with
                 | (Result m, _, _) when (m :? TestFailed) ->
-                    if logFailures then printFailure verbose (m :?> TestFailed)
+                    if logFailures then m :?> TestFailed |> printFailure verbose
                     return! loop (x, ch)
-                | (Finished m, _, Some c) ->
-                    messageToOutput m |> c.Reply
-                | (Finished m, _, _) ->
-                    return! loop ((Some (messageToOutput m)), ch)
-                | (OnDone c, Some i, _) ->
-                    c.Reply i
-                | (OnDone c, _, _) ->
-                    return! loop (x, Some c)
-                | _ -> return! loop (x, ch) }
+                | (Finished m, _, Some c) -> messageToOutput m |> c.Reply
+                | (Finished m, _, _)      -> return! loop (messageToOutput m |> Some, ch)
+                | (OnDone c, Some i, _)   -> c.Reply i
+                | (OnDone c, _, _)        -> return! loop (x, Some c)
+                | _                       -> return! loop (x, ch) }
         loop (None, None) )
 
     member x.Result = agent.Post << Result

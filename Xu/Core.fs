@@ -51,8 +51,10 @@ let concatMap f = List.fold (fun acc n -> f n |> List.append acc) []
 let asyncMap f x =
     let rec map g y acc = async {
         match y with
-        | [] -> return acc
+        | []      -> return acc
         | (r::rs) ->
             let! z = f r
             return! map f rs (z::acc) }
     map f x []
+
+let asyncListSingleton x = async { let! x' = x in return [x'] } 

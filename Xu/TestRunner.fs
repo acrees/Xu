@@ -27,7 +27,7 @@ let runTests mode path = async {
         new DelegatingMessageSink(null, (fun x ->
             match x with
             | :? TestResultMessage as m -> agent.Result m
-            | :? IFinishedMessage as m -> agent.Finished m
+            | :? IFinishedMessage as m  -> agent.Finished m
             | _ -> ()))
     use fx = new XunitTestFramework()
     use exec = AssemblyName.GetAssemblyName(path) |> fx.GetExecutor
@@ -36,12 +36,10 @@ let runTests mode path = async {
 
 let locateAndRunTests mode path locator =
     async {
-        match locator with
-        | Exact -> return! runTests mode path
-        | Find ->
-            let! results = findDlls "" "" path |> asyncMap (runTests mode)
-            return List.fold combine Output.Identity results
-        | Regex r ->
-            let! results = findDlls r "" path |> asyncMap (runTests mode)
-            return List.fold combine Output.Identity results }
+        let! results =
+            match locator with
+            | Exact   -> runTests mode path |> asyncListSingleton
+            | Find    -> findDlls "" "" path |> asyncMap (runTests mode)
+            | Regex r -> findDlls r "" path |> asyncMap (runTests mode)
+        return List.fold combine Output.Identity results }
     |> Async.RunSynchronously
